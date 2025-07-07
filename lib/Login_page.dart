@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:technical_task/Home_page.dart';
 
 import 'Auth_service.dart';
+import 'Provider/auth_provider.dart';
 
 class Login_Page extends StatefulWidget {
   const Login_Page({super.key});
@@ -16,9 +18,11 @@ class _Login_PageState extends State<Login_Page> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurepswd = true;
 
   @override
   Widget build(BuildContext context) {
+    print("rebuild ui");
     return Scaffold(
       backgroundColor: Color(0xff14BF9E),
       body: Stack(
@@ -134,21 +138,36 @@ class _Login_PageState extends State<Login_Page> {
                   SizedBox(height: 25),
                   Padding(
                     padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        hintText: "Password",
-                        hintStyle: GoogleFonts.manrope(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        prefixIcon: Icon(Icons.lock_outline_rounded),
-                        suffixIcon: Icon(Icons.remove_red_eye_outlined),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(width: 0.5),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
+                    child: Consumer<AuthProvider>(
+                      builder: (context, authProvider,_) {
+                        return TextFormField(
+                          obscureText: authProvider.obscurepswd,
+                          controller: _passwordController,
+
+                          decoration: InputDecoration(
+                            hintText: "Password",
+                            hintStyle: GoogleFonts.manrope(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            prefixIcon: Icon(Icons.lock_outline_rounded),
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                authProvider.obscurePassword();
+                              },
+                              icon: Icon(
+                               authProvider.obscurepswd
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                            ),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(width: 0.5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        );
+                      }
                     ),
                   ),
                   SizedBox(height: 25),
@@ -157,27 +176,39 @@ class _Login_PageState extends State<Login_Page> {
                     children: [
                       GestureDetector(
                         onTap: () async {
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          final email = _emailController.text.trim();//trim is used to get the data from the inputtext.
+                          // setState(() {
+                          //   _isLoading = true;
+                          // });
+                          final email =
+                              _emailController.text
+                                  .trim(); //trim is used to get the data from the inputtext.
                           final password = _passwordController.text.trim();
-                          final authService = AuthService();
-
+                          // final authService = AuthService();
+                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
                           try {
                             // final userName = await authService.login(
                             //   email,
                             //   password,
                             //  );        method without using models
-                            final loginResponse = await authService.login(email, password);
+                            // final loginResponse = await authService.login(
+                            //   email,
+                            //   password,
+                            // );
+                            await authProvider.login(email, password);
 
-                            final userName = loginResponse.user.userDisplayName; // ✅ correct extraction
-                            final emailFromApi = loginResponse.user.email; // here whole data from api is fetched and can be called by using loginresponse.the name
-                            final role = loginResponse.user.userType.role;
+                            // final userName =
+                            //     loginResponse
+                            //         .user
+                            //         .userDisplayName; // correct extraction of data from api
+                            // final emailFromApi =
+                            //     loginResponse
+                            //         .user
+                            //         .email; // here whole data from api is fetched and can be called by using loginresponse.the name
+                            // final role = loginResponse.user.userType.role;
 
-                            setState(() {
-                              _isLoading = false;
-                            });
+                            // setState(() {
+                            //   _isLoading = false;
+                            // });
 
                             _emailController.clear();
                             _passwordController.clear();
@@ -185,11 +216,12 @@ class _Login_PageState extends State<Login_Page> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => HomePage(
-                                  userName: userName, // from API
-                                  email: emailFromApi, // from the api
-                                  role: role, // from the api
-                                ),
+                                builder:
+                                    (context) => HomePage(
+                                      // userName: authProvider.response?.user.fullName??'', // from API
+                                      // email: authProvider.response?.user.email??'', // from the api
+                                      // role: authProvider.response?.user.userType.role??'', // from the api
+                                    ),
                               ),
                             );
 
@@ -207,39 +239,42 @@ class _Login_PageState extends State<Login_Page> {
                             //         ],
                             //       ),
                             // );
-                          }
-                          catch (e) {
-                            setState(() {
-                              _isLoading = false;
-                            });
+                          } catch (e) {
+                            // setState(() {
+                            //   _isLoading = false;
+                            // });
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text("Login failed: $e")),
                             );
                           }
                         },
-                        child: Container(
-                          height: 55,
-                          width: 295,
-                          decoration: BoxDecoration(
-                            color: Color(0xff14BF9E),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Center(
-                            child:
-                                _isLoading
-                                    ? CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                    : Text(
-                                      "Sign in",
-                                      style: GoogleFonts.manrope(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                          ),
+                        child: Consumer<AuthProvider>(
+                          builder: (context,authProvider, _) {
+                            return Container(
+                              height: 55,
+                              width: 295,
+                              decoration: BoxDecoration(
+                                color: Color(0xff14BF9E),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Center(
+                                child:
+                                   authProvider.isLoading
+                                        ? CircularProgressIndicator(
+                                          color: Colors.white,
+                                        )
+                                        : Text(
+                                          "Sign in",
+                                          style: GoogleFonts.manrope(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                              ),
+                            );
+                          }
                         ),
                       ),
                     ],
