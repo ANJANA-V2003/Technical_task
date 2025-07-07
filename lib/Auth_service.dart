@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import 'model/login_api.dart';
+
 class AuthService {
-  Future<String> login(String email, String password) async {
+  Future<LoginResponse> login(String email, String password) async {
     final url = Uri.parse(
       'https://entrance-test-api.datahex.co/api/v1/auth/login/',
     );
@@ -14,13 +16,16 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data != null && data['user'] != null) {
-          final userName = data['user']['userDisplayName'];
-          return userName;
-        } else {
-          throw Exception("User data not found in the response");
-        }
+        final data = loginResponseFromJson(response.body);
+        return data;
+
+        // if (data != null && data['user'] != null) {
+        //   final userName = data['user']['userDisplayName'];
+        //   return userName;
+        // }
+        // else {
+        //   throw Exception("User data not found in the response");
+        // }
       } else {
         final error = jsonDecode(response.body);
         throw Exception(error['message'] ?? 'Login failed');

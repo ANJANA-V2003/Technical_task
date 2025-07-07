@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:technical_task/Home_page.dart';
 
 import 'Auth_service.dart';
 
@@ -159,34 +160,55 @@ class _Login_PageState extends State<Login_Page> {
                           setState(() {
                             _isLoading = true;
                           });
-                          final email = _emailController.text.trim();
+                          final email = _emailController.text.trim();//trim is used to get the data from the inputtext.
                           final password = _passwordController.text.trim();
                           final authService = AuthService();
 
                           try {
-                            final userName = await authService.login(
-                              email,
-                              password,
-                            );
+                            // final userName = await authService.login(
+                            //   email,
+                            //   password,
+                            //  );        method without using models
+                            final loginResponse = await authService.login(email, password);
+
+                            final userName = loginResponse.user.userDisplayName; // ✅ correct extraction
+                            final emailFromApi = loginResponse.user.email; // here whole data from api is fetched and can be called by using loginresponse.the name
+                            final role = loginResponse.user.userType.role;
+
                             setState(() {
                               _isLoading = false;
                             });
 
-                            showDialog(
-                              context: context,
-                              builder:
-                                  (_) => AlertDialog(
-                                    title: Text("Login Successful"),
-                                    content: Text("Welcome $userName"),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: Text("OK"),
-                                      ),
-                                    ],
-                                  ),
+                            _emailController.clear();
+                            _passwordController.clear();
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HomePage(
+                                  userName: userName, // from API
+                                  email: emailFromApi, // from the api
+                                  role: role, // from the api
+                                ),
+                              ),
                             );
-                          } catch (e) {
+
+                            // showDialog(
+                            //   context: context,
+                            //   builder:
+                            //       (_) => AlertDialog(
+                            //         title: Text("Login Successful"),
+                            //         content: Text("Welcome $userName"),
+                            //         actions: [
+                            //           TextButton(
+                            //             onPressed: () => Navigator.pop(context),
+                            //             child: Text("OK"),
+                            //           ),
+                            //         ],
+                            //       ),
+                            // );
+                          }
+                          catch (e) {
                             setState(() {
                               _isLoading = false;
                             });
