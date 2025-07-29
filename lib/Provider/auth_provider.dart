@@ -18,6 +18,8 @@ class AuthProvider with ChangeNotifier {
   LoginResponse? get response => _response;
   bool  get isLoading => _isLoading;
 
+  get loginResponseModel => null;
+
 
   obscurePassword()
   {
